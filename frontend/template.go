@@ -17,7 +17,6 @@ type tmplArguments struct {
 	IsWhois     bool
 	WhoisTarget string
 
-	URLProto   string
 	URLOption  string
 	URLServer  string
 	URLCommand string
@@ -59,15 +58,12 @@ var tmpl = template.Must(template.New("tmpl").Parse(`
 
 	<div class="collapse navbar-collapse" id="navbarSupportedContent">
 		<ul class="navbar-nav mr-auto">
-			<li class="nav-item"><a class="nav-link{{ if eq "ipv4" .URLProto }} active{{ end }}" href="/ipv4/{{ .URLOption }}/{{ .URLServer }}/{{ .URLCommand }}"> IPv4 </a></li>
-			<li class="nav-item"><a class="nav-link{{ if eq "ipv6" .URLProto }} active{{ end }}" href="/ipv6/{{ .URLOption }}/{{ .URLServer }}/{{ .URLCommand }}"> IPv6 </a></li>
-			<span class="navbar-text">|</span>
 			<li class="nav-item">
-				<a class="nav-link{{ if .AllServersLinkActive }} active{{ end }}" href="/{{ .URLProto }}/{{ .URLOption }}/{{ .AllServersURL }}/{{ .URLCommand }}"> All Servers </a>
+				<a class="nav-link{{ if .AllServersLinkActive }} active{{ end }}" href="/{{ .URLOption }}/{{ .AllServersURL }}/{{ .URLCommand }}">all</a>
 			</li>
 			{{ range $k, $v := .Servers }}
 			<li class="nav-item">
-				<a class="nav-link{{ if eq $.URLServer $v }} active{{ end }}" href="/{{ $.URLProto }}/{{ $.URLOption }}/{{ $v }}/{{ $.URLCommand }}">{{ $v }}</a>
+				<a class="nav-link{{ if eq $.URLServer $v }} active{{ end }}" href="/{{ $.URLOption }}/{{ $v }}/{{ $.URLCommand }}">{{ $v }}</a>
 			</li>
 			{{ end }}
 		</ul>
@@ -84,7 +80,6 @@ var tmpl = template.Must(template.New("tmpl").Parse(`
 					<option value="{{ $k }}"{{ if eq $k $option }} selected{{end}}>{{ $v }}</option>
 					{{ end }}
 				</select>
-				<input name="proto" class="d-none" value="{{ .URLProto }}">
 				<input name="server" class="d-none" value="{{ .URLServer }}">
 				<input name="target" class="form-control" placeholder="Target" aria-label="Target" value="{{ $target }}">
 				<div class="input-group-append">

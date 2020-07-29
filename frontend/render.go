@@ -16,10 +16,9 @@ func renderTemplate(w http.ResponseWriter, r *http.Request, title string, conten
 	whoisTarget := strings.Join(split[1:], "/")
 
 	// Use a default URL if the request URL is too short
-	// The URL is for return to IPv4 summary page
-	if len(split) < 3 {
-		path = "ipv4/summary/" + strings.Join(setting.servers, "+") + "/"
-	} else if len(split) == 3 {
+	if len(split) < 2 {
+		path = "summary/" + strings.Join(setting.servers, "+") + "/"
+	} else if len(split) == 2 {
 		path += "/"
 	}
 
@@ -41,15 +40,14 @@ func renderTemplate(w http.ResponseWriter, r *http.Request, title string, conten
 		"traceroute":         "traceroute ...",
 	}
 	args.Servers = setting.servers
-	args.AllServersLinkActive = strings.ToLower(split[2]) == strings.ToLower(strings.Join(setting.servers, "+"))
+	args.AllServersLinkActive = strings.ToLower(split[1]) == strings.ToLower(strings.Join(setting.servers, "+"))
 	args.AllServersURL = strings.Join(setting.servers, "+")
 	args.IsWhois = isWhois
 	args.WhoisTarget = whoisTarget
 
-	args.URLProto = strings.ToLower(split[0])
-	args.URLOption = strings.ToLower(split[1])
-	args.URLServer = strings.ToLower(split[2])
-	args.URLCommand = split[3]
+	args.URLOption = strings.ToLower(split[0])
+	args.URLServer = strings.ToLower(split[1])
+	args.URLCommand = split[2]
 
 	args.Title = setting.titleBrand + title
 	args.Brand = setting.navBarBrand
@@ -88,7 +86,7 @@ type summaryTableArguments struct {
 }
 
 // Output a table for the summary page
-func summaryTable(isIPv6 bool, data string, serverName string) string {
+func summaryTable(data string, serverName string) string {
 	var result string
 
 	// Sort the table, excluding title row
@@ -154,11 +152,7 @@ func summaryTable(isIPv6 bool, data string, serverName string) string {
 			}[row[3]])
 
 			// Add link to detail for first column
-			proto := "ipv4"
-			if isIPv6 {
-				proto = "ipv6"
-			}
-			result += fmt.Sprintf(`<td><a href="/%s/detail/%s/%[3]s">%[3]s</a></td>`, proto, serverName, row[0])
+			result += fmt.Sprintf(`<td><a href="/detail/%s/%[2]s">%[2]s</a></td>`, serverName, row[0])
 
 			// Draw the other cells
 			for i := 1; i < 6; i++ {
