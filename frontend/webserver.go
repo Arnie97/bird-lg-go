@@ -38,10 +38,10 @@ func webBackendCommunicator(endpoint string, command string) func(w http.Respons
 	}
 
 	return func(w http.ResponseWriter, r *http.Request) {
-		split := strings.SplitN(r.URL.Path[1:], "/", 4)
+		split := strings.SplitN(r.URL.Path[1:], "/", 3)
 		var urlCommands string
-		if len(split) >= 4 {
-			urlCommands = split[3]
+		if len(split) > 2 {
+			urlCommands = split[2]
 		}
 
 		var backendCommand string
@@ -52,14 +52,13 @@ func webBackendCommunicator(endpoint string, command string) func(w http.Respons
 		}
 		backendCommand = strings.TrimSpace(backendCommand)
 
-		var servers []string = strings.Split(split[2], "+")
+		var servers []string = strings.Split(split[1], "+")
 		var responses []string = batchRequest(servers, endpoint, backendCommand)
 		var result string
 		for i, response := range responses {
 			result += "<h2>" + html.EscapeString(servers[i]) + ": " + html.EscapeString(backendCommand) + "</h2>"
-			if (endpoint == "bird" || endpoint == "bird6") && backendCommand == "show protocols" && len(response) > 4 && strings.ToLower(response[0:4]) == "name" {
-				var isIPv6 bool = endpoint[len(endpoint)-1] == '6'
-				result += summaryTable(isIPv6, response, servers[i])
+			if endpoint == "bird" && backendCommand == "show protocols" && len(response) > 4 && strings.ToLower(response[0:4]) == "name" {
+				result += summaryTable(response, servers[i])
 			} else {
 				result += smartFormatter(response)
 			}
@@ -94,7 +93,7 @@ func webHandlerBGPMap(endpoint string, command string) func(w http.ResponseWrite
 			backendCommand = backendCommandPrimitive
 		}
 
-		var servers []string = strings.Split(split[2], "+")
+		var servers []string = strings.Split(split[1], "+")
 		var responses []string = batchRequest(servers, endpoint, backendCommand)
 		renderTemplate(
 			w, r,
@@ -121,39 +120,28 @@ func webHandlerNavbarFormRedirect(w http.ResponseWriter, r *http.Request) {
 	if query.Get("action") == "whois" {
 		http.Redirect(w, r, "/"+query.Get("action")+"/"+query.Get("target"), 302)
 	} else if query.Get("action") == "summary" {
-		http.Redirect(w, r, "/"+query.Get("proto")+"/"+query.Get("action")+"/"+query.Get("server"), 302)
+		http.Redirect(w, r, "/"+query.Get("action")+"/"+query.Get("server"), 302)
 	} else {
-		http.Redirect(w, r, "/"+query.Get("proto")+"/"+query.Get("action")+"/"+query.Get("server")+"/"+query.Get("target"), 302)
+		http.Redirect(w, r, "/"+query.Get("action")+"/"+query.Get("server")+"/"+query.Get("target"), 302)
 	}
 }
 
 func webServerStart() {
 	// Start HTTP server
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		http.Redirect(w, r, "/ipv4/summary/"+strings.Join(setting.servers, "+"), 302)
+		http.Redirect(w, r, "/summary/"+strings.Join(setting.servers, "+"), 302)
 	})
-	http.HandleFunc("/ipv4/summary/", webBackendCommunicator("bird", "summary"))
-	http.HandleFunc("/ipv6/summary/", webBackendCommunicator("bird6", "summary"))
-	http.HandleFunc("/ipv4/detail/", webBackendCommunicator("bird", "detail"))
-	http.HandleFunc("/ipv6/detail/", webBackendCommunicator("bird6", "detail"))
-	http.HandleFunc("/ipv4/route/", webBackendCommunicator("bird", "route"))
-	http.HandleFunc("/ipv6/route/", webBackendCommunicator("bird6", "route"))
-	http.HandleFunc("/ipv4/route_all/", webBackendCommunicator("bird", "route_all"))
-	http.HandleFunc("/ipv6/route_all/", webBackendCommunicator("bird6", "route_all"))
-	http.HandleFunc("/ipv4/route_bgpmap/", webHandlerBGPMap("bird", "route_bgpmap"))
-	http.HandleFunc("/ipv6/route_bgpmap/", webHandlerBGPMap("bird6", "route_bgpmap"))
-	http.HandleFunc("/ipv4/route_where/", webBackendCommunicator("bird", "route_where"))
-	http.HandleFunc("/ipv6/route_where/", webBackendCommunicator("bird6", "route_where"))
-	http.HandleFunc("/ipv4/route_where_all/", webBackendCommunicator("bird", "route_where_all"))
-	http.HandleFunc("/ipv6/route_where_all/", webBackendCommunicator("bird6", "route_where_all"))
-	http.HandleFunc("/ipv4/route_where_bgpmap/", webHandlerBGPMap("bird", "route_where_bgpmap"))
-	http.HandleFunc("/ipv6/route_where_bgpmap/", webHandlerBGPMap("bird6", "route_where_bgpmap"))
-	http.HandleFunc("/ipv4/route_generic/", webBackendCommunicator("bird", "route_generic"))
-	http.HandleFunc("/ipv6/route_generic/", webBackendCommunicator("bird6", "route_generic"))
-	http.HandleFunc("/ipv4/generic/", webBackendCommunicator("bird", "generic"))
-	http.HandleFunc("/ipv6/generic/", webBackendCommunicator("bird6", "generic"))
-	http.HandleFunc("/ipv4/traceroute/", webBackendCommunicator("traceroute", "traceroute"))
-	http.HandleFunc("/ipv6/traceroute/", webBackendCommunicator("traceroute6", "traceroute"))
+	http.HandleFunc("/summary/", webBackendCommunicator("bird", "summary"))
+	http.HandleFunc("/detail/", webBackendCommunicator("bird", "detail"))
+	http.HandleFunc("/route/", webBackendCommunicator("bird", "route"))
+	http.HandleFunc("/route_all/", webBackendCommunicator("bird", "route_all"))
+	http.HandleFunc("/route_bgpmap/", webHandlerBGPMap("bird", "route_bgpmap"))
+	http.HandleFunc("/route_where/", webBackendCommunicator("bird", "route_where"))
+	http.HandleFunc("/route_where_all/", webBackendCommunicator("bird", "route_where_all"))
+	http.HandleFunc("/route_where_bgpmap/", webHandlerBGPMap("bird", "route_where_bgpmap"))
+	http.HandleFunc("/route_generic/", webBackendCommunicator("bird", "route_generic"))
+	http.HandleFunc("/generic/", webBackendCommunicator("bird", "generic"))
+	http.HandleFunc("/traceroute/", webBackendCommunicator("traceroute", "traceroute"))
 	http.HandleFunc("/whois/", webHandlerWhois)
 	http.HandleFunc("/redir", webHandlerNavbarFormRedirect)
 	http.HandleFunc("/telegram/", webHandlerTelegramBot)
