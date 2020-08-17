@@ -51,10 +51,12 @@ func tracerouteHandler(httpW http.ResponseWriter, httpR *http.Request) {
 				[]string{
 					"traceroute",
 					"traceroute",
+					"busybox",
 				},
 				[][]string{
 					{"-q1", "-N32", "-w1", query},
 					{"-q1", "-w1", query},
+					{"traceroute", "-q1", "-w1", query},
 				},
 			)
 		} else {
