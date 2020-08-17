@@ -39,10 +39,19 @@ var tmpl = template.Must(template.New("tmpl").Parse(`
 <title>{{ .Title }}</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.1/dist/css/bootstrap.min.css" integrity="sha256-VoFZSlmyTXsegReQCNmbXrS4hBBUl/cexZvPmPWoJsY=" crossorigin="anonymous">
 <meta name="robots" content="noindex, nofollow">
+<style>
+	.container h2 {
+		font-size: 1.5rem;
+		margin: 48px 0px 20px;
+	}
+	.nav-link.active{
+		font-weight: bold;
+	}
+</style>
 </head>
 <body>
 
-<nav class="navbar navbar-expand-lg navbar-light bg-light">
+<nav class="navbar navbar-expand-lg navbar-light bg-light fixed-top border-bottom">
 	<a class="navbar-brand" href="/">{{ .Brand }}</a>
 	<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
 		<span class="navbar-toggler-icon"></span>
@@ -86,7 +95,7 @@ var tmpl = template.Must(template.New("tmpl").Parse(`
 	</div>
 </nav>
 
-<div class="container">
+<div class="container px-4 py-5">
 	{{ .Content }}
 </div>
 
