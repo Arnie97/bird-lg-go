@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 	"regexp"
 	"sort"
@@ -94,17 +95,17 @@ func summaryTable(isIPv6 bool, data string, serverName string) string {
 	stringsSplitted := strings.Split(strings.TrimSpace(data), "\n")
 	if len(stringsSplitted) <= 1 {
 		// Likely backend returned an error message
-		result = "<pre>" + strings.TrimSpace(data) + "</pre>"
+		result = fmt.Sprintf("<pre>%s</pre>", strings.TrimSpace(data))
 	} else {
 		// Draw the table head
-		result += `<table class="table table-striped table-bordered table-sm">`
+		result += `<table class="table table-hover table-bordered table-sm">`
 		result += `<thead>`
 		for _, col := range strings.Split(stringsSplitted[0], " ") {
 			colTrimmed := strings.TrimSpace(col)
 			if len(colTrimmed) == 0 {
 				continue
 			}
-			result += `<th scope="col">` + colTrimmed + `</th>`
+			result += fmt.Sprintf(`<th scope="col">%s</th>`, colTrimmed)
 		}
 		result += `</thead><tbody>`
 
@@ -145,18 +146,20 @@ func summaryTable(isIPv6 bool, data string, serverName string) string {
 			}
 
 			// Draw the row in red if the link isn't up
-			result += `<tr class="` + (map[string]string{
+			result += fmt.Sprintf(`<tr class="%s">`, map[string]string{
 				"up":      "table-success",
-				"down":    "table-secondary",
+				"down":    "table-warning",
 				"start":   "table-danger",
 				"passive": "table-info",
-			})[row[3]] + `">`
+			}[row[3]])
+
 			// Add link to detail for first column
+			proto := "ipv4"
 			if isIPv6 {
-				result += `<td><a href="/ipv6/detail/` + serverName + `/` + row[0] + `">` + row[0] + `</a></td>`
-			} else {
-				result += `<td><a href="/ipv4/detail/` + serverName + `/` + row[0] + `">` + row[0] + `</a></td>`
+				proto = "ipv6"
 			}
+			result += fmt.Sprintf(`<td><a href="/%s/detail/%s/%[3]s">%[3]s</a></td>`, proto, serverName, row[0])
+
 			// Draw the other cells
 			for i := 1; i < 6; i++ {
 				result += "<td>" + row[i] + "</td>"
