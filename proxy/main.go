@@ -95,8 +95,8 @@ func main() {
 
 	// Start HTTP server
 	http.HandleFunc("/", invalidHandler)
-	http.HandleFunc("/bird", birdHandler)
-	http.HandleFunc("/bird6", bird6Handler)
+	http.HandleFunc("/bird", birdIPv4Wrapper)
+	http.HandleFunc("/bird6", birdIPv6Wrapper)
 	http.HandleFunc("/traceroute", tracerouteIPv4Wrapper)
 	http.HandleFunc("/traceroute6", tracerouteIPv6Wrapper)
 	http.ListenAndServe(*listenParam, handlers.LoggingHandler(os.Stdout, accessHandler(http.DefaultServeMux)))
