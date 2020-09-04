@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
 	"net/http"
 	"os"
@@ -50,12 +51,18 @@ func accessHandler(next http.Handler) http.Handler {
 }
 
 type settingType struct {
-	birdSocket string
-	listen     string
-	allowedIPs []string
+	birdSocket  string
+	listen      string
+	allowedIPs  []string
+	peeringConf string
+	templates   string
 }
 
-var setting settingType
+var (
+	setting     settingType
+	peeringConf *Peering
+	templates   []TemplateFile
+)
 
 // Wrapper of tracer
 func main() {
@@ -64,6 +71,8 @@ func main() {
 		"/var/run/bird/bird.ctl",
 		":8000",
 		[]string{""},
+		"",
+		"templates",
 	}
 
 	if birdSocketEnv := os.Getenv("BIRD_SOCKET"); birdSocketEnv != "" {
@@ -75,16 +84,37 @@ func main() {
 	if AllowedIPsEnv := os.Getenv("ALLOWED_IPS"); AllowedIPsEnv != "" {
 		settingDefault.allowedIPs = strings.Split(AllowedIPsEnv, ",")
 	}
+	if peeringEnv := os.Getenv("BIRDLG_PEERING"); peeringEnv != "" {
+		settingDefault.peeringConf = peeringEnv
+	}
+	if templatesEnv := os.Getenv("BIRDLG_TEMPLATES"); templatesEnv != "" {
+		settingDefault.templates = templatesEnv
+	}
 
 	// Allow parameters to override environment variables
 	birdParam := flag.String("bird", settingDefault.birdSocket, "socket file for bird, set either in parameter or environment variable BIRD_SOCKET")
 	listenParam := flag.String("listen", settingDefault.listen, "listen address, set either in parameter or environment variable BIRDLG_LISTEN")
 	AllowedIPsParam := flag.String("allowed", strings.Join(settingDefault.allowedIPs, ","), "IPs allowed to access this proxy, separated by commas. Don't set to allow all IPs.")
+	peeringParam := flag.String("peering", settingDefault.peeringConf, "peering config file, set either in parameter or environment variable BIRDLG_PEERING")
+	templatesParam := flag.String("templates", settingDefault.templates, "peering config file, set either in parameter or environment variable BIRDLG_TEMPLATES")
 	flag.Parse()
 
 	setting.birdSocket = *birdParam
 	setting.listen = *listenParam
 	setting.allowedIPs = strings.Split(*AllowedIPsParam, ",")
+	setting.peeringConf = *peeringParam
+	setting.templates = *templatesParam
+
+	if setting.peeringConf != "" {
+		if file, err := os.Open(setting.peeringConf); err != nil {
+			panic(err)
+		} else if err = json.NewDecoder(file).Decode(&peeringConf); err != nil {
+			panic(err)
+		} else {
+			file.Close()
+		}
+		loadTemplates()
+	}
 
 	// Start HTTP server
 	http.HandleFunc("/", invalidHandler)
@@ -92,5 +122,6 @@ func main() {
 	http.HandleFunc("/bird6", birdHandler)
 	http.HandleFunc("/traceroute", tracerouteHandler)
 	http.HandleFunc("/traceroute6", tracerouteHandler)
+	http.HandleFunc("/peering", peeringWrapper)
 	http.ListenAndServe(*listenParam, handlers.LoggingHandler(os.Stdout, accessHandler(http.DefaultServeMux)))
 }
