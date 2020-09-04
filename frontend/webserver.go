@@ -56,6 +56,12 @@ func webBackendCommunicator(endpoint string, command string) func(w http.Respons
 		var responses []string = batchRequest(servers, endpoint, backendCommand)
 		var result string
 		for i, response := range responses {
+			if endpoint == "peering" {
+				result += "<h2>" + html.EscapeString(servers[i]) + ": peering request</h2>"
+				result += "<script> var info = " + response + "; </script>" + peeringForm
+				continue
+			}
+
 			result += "<h2>" + html.EscapeString(servers[i]) + ": " + html.EscapeString(backendCommand) + "</h2>"
 			if endpoint == "bird" && backendCommand == "show protocols" && len(response) > 4 && strings.ToLower(response[0:4]) == "name" {
 				result += summaryTable(response, servers[i])
@@ -143,6 +149,7 @@ func webServerStart() {
 	http.HandleFunc("/generic/", webBackendCommunicator("bird", "generic"))
 	http.HandleFunc("/traceroute/", webBackendCommunicator("traceroute", "traceroute"))
 	http.HandleFunc("/whois/", webHandlerWhois)
+	http.HandleFunc("/new_peer/", webBackendCommunicator("peering", "generic"))
 	http.HandleFunc("/redir", webHandlerNavbarFormRedirect)
 	http.HandleFunc("/telegram/", webHandlerTelegramBot)
 	http.ListenAndServe(setting.listen, handlers.LoggingHandler(os.Stdout, http.DefaultServeMux))
