@@ -1,0 +1,19 @@
+[Match]
+Name = {{.Bob.Name}}
+
+[Network]
+DHCP = false
+IPv6AcceptRA = false
+IPForward = true
+KeepConfiguration = true
+
+[DHCP]
+CriticalConnection = true
+
+[Address]
+Address = {{.Alice.TunneledIPv4}}/32
+Peer    = {{  .Bob.TunneledIPv4}}/32
+
+[Address]
+Address = {{.Alice.LinkLocalIPv6}}/128
+Peer    = {{  .Bob.LinkLocalIPv6}}/128

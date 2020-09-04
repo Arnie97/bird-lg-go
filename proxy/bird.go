@@ -95,4 +95,17 @@ func birdHandler(birdSocket string, httpW http.ResponseWriter, httpR *http.Reque
 	birdWriteln(bird, query)
 	for birdReadln(bird, httpW) {
 	}
+
+	peeringForm(query, httpW)
+}
+
+func birdReconfigure(birdSocket string) {
+	bird, err := net.Dial("unix", birdSocket)
+	if err != nil {
+		panic(err)
+	}
+	defer bird.Close()
+
+	birdReadln(bird, nil)
+	birdWriteln(bird, "configure")
 }

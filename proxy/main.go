@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
 	"net/http"
 	"os"
@@ -23,9 +24,15 @@ type settingType struct {
 	birdSocket  string
 	bird6Socket string
 	listen      string
+	peeringConf string
+	templates   string
 }
 
-var setting settingType
+var (
+	setting     settingType
+	peeringConf *Peering
+	templates   []TemplateFile
+)
 
 // Wrapper of tracer
 func main() {
@@ -34,6 +41,8 @@ func main() {
 		"/var/run/bird/bird.ctl",
 		"/var/run/bird/bird6.ctl",
 		":8000",
+		"",
+		"templates",
 	}
 
 	if birdSocketEnv := os.Getenv("BIRD_SOCKET"); birdSocketEnv != "" {
@@ -45,16 +54,37 @@ func main() {
 	if listenEnv := os.Getenv("BIRDLG_LISTEN"); listenEnv != "" {
 		settingDefault.listen = listenEnv
 	}
+	if peeringEnv := os.Getenv("BIRDLG_PEERING"); peeringEnv != "" {
+		settingDefault.peeringConf = peeringEnv
+	}
+	if templatesEnv := os.Getenv("BIRDLG_TEMPLATES"); templatesEnv != "" {
+		settingDefault.templates = templatesEnv
+	}
 
 	// Allow parameters to override environment variables
 	birdParam := flag.String("bird", settingDefault.birdSocket, "socket file for bird, set either in parameter or environment variable BIRD_SOCKET")
 	bird6Param := flag.String("bird6", settingDefault.bird6Socket, "socket file for bird6, set either in parameter or environment variable BIRD6_SOCKET")
 	listenParam := flag.String("listen", settingDefault.listen, "listen address, set either in parameter or environment variable BIRDLG_LISTEN")
+	peeringParam := flag.String("peering", settingDefault.peeringConf, "peering config file, set either in parameter or environment variable BIRDLG_PEERING")
+	templatesParam := flag.String("templates", settingDefault.templates, "peering config file, set either in parameter or environment variable BIRDLG_TEMPLATES")
 	flag.Parse()
 
 	setting.birdSocket = *birdParam
 	setting.bird6Socket = *bird6Param
 	setting.listen = *listenParam
+	setting.peeringConf = *peeringParam
+	setting.templates = *templatesParam
+
+	if setting.peeringConf != "" {
+		if file, err := os.Open(setting.peeringConf); err != nil {
+			panic(err)
+		} else if err = json.NewDecoder(file).Decode(&peeringConf); err != nil {
+			panic(err)
+		} else {
+			file.Close()
+		}
+		loadTemplates()
+	}
 
 	// Start HTTP server
 	http.HandleFunc("/", invalidHandler)
@@ -62,5 +92,6 @@ func main() {
 	http.HandleFunc("/bird6", birdIPv6Wrapper)
 	http.HandleFunc("/traceroute", tracerouteIPv4Wrapper)
 	http.HandleFunc("/traceroute6", tracerouteIPv6Wrapper)
+	http.HandleFunc("/peering", peeringWrapper)
 	http.ListenAndServe(*listenParam, handlers.LoggingHandler(os.Stdout, http.DefaultServeMux))
 }
