@@ -43,8 +43,8 @@ type TemplateFile struct {
 
 // bob should not tell alice his private key, and vice versa
 func (p *Peering) MaskPrivateKeys() *Peering {
-	p.Alice.WireGuardPrivateKey = "<private key>"
-	p.Bob.WireGuardPrivateKey = "<private key>"
+	p.Alice.WireGuardPrivateKey = "(private key)"
+	p.Bob.WireGuardPrivateKey = "(private key)"
 	return p
 }
 

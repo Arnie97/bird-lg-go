@@ -99,3 +99,136 @@ var tmpl = template.Must(template.New("tmpl").Parse(`
 </body>
 </html>
 `))
+
+const peeringForm = `
+<form>
+<div class="form-group row">
+	<label for="aliceASN" class="col-xs-12 col-md-4 col-lg-3">My AS Number</label>
+	<input id="aliceASN" type="text" class="form-control col-xs-12 col-md-8 col-lg-6" placeholder="Loading..." readonly>
+</div>
+<div class="form-group row">
+	<label for="aliceLoc" class="col-xs-12 col-md-4 col-lg-3">Location (IATA Identifier)</label>
+	<input id="aliceLoc" type="text" class="form-control col-xs-12 col-md-8 col-lg-6" readonly>
+</div>
+<div class="form-group row">
+	<label for="aliceIPv4" class="col-xs-12 col-md-4 col-lg-3">Tunneled IPv4 Address</label>
+	<input id="aliceIPv4" type="text" class="form-control col-xs-12 col-md-8 col-lg-6" readonly>
+</div>
+<div class="form-group row">
+	<label for="aliceIPv6" class="col-xs-12 col-md-4 col-lg-3">Tunneled IPv6 Address</label>
+	<input id="aliceIPv6" type="text" class="form-control col-xs-12 col-md-8 col-lg-6" readonly>
+</div>
+<div class="form-group row">
+	<label for="aliceLink" class="col-xs-12 col-md-4 col-lg-3">Link Local IPv6 Address</label>
+	<input id="aliceLink" type="text" class="form-control col-xs-12 col-md-8 col-lg-6" readonly>
+</div>
+<div class="form-group row">
+	<label for="alicePubl" class="col-xs-12 col-md-4 col-lg-3">WireGuard Public Key</label>
+	<input id="alicePubl" type="text" class="form-control col-xs-12 col-md-8 col-lg-6" readonly>
+</div>
+<div class="form-group row">
+	<label for="aliceWG" class="col-xs-12 col-md-4 col-lg-3">WireGuard Endpoint</label>
+	<input id="aliceWG" type="text" class="form-control col-xs-12 col-md-8 col-lg-6" readonly>
+</div>
+</form>
+
+<h2>your point of presence</h2>
+
+<form>
+<div class="form-group row">
+	<label for="bobAS" class="col-xs-12 col-md-4 col-lg-3">Your AS Number</label>
+	<input id="bobAS" type="text" class="form-control col-xs-12 col-md-8 col-lg-6" placeholder="424242xxxx" required>
+</div>
+<div class="form-group row">
+	<label for="bobLoc" class="col-xs-12 col-md-4 col-lg-3">Location (IATA Identifier)</label>
+	<input id="bobLoc" type="text" class="form-control col-xs-12 col-md-8 col-lg-6" placeholder="XXX">
+</div>
+<div class="form-group row">
+	<label for="bobIPv4" class="col-xs-12 col-md-4 col-lg-3">Tunneled IPv4 Address</label>
+	<input id="bobIPv4" type="text" class="form-control col-xs-12 col-md-8 col-lg-6" placeholder="172.2x.xxx.xxx / 10.127.xxx.xxx" required>
+</div>
+<div class="form-group row">
+	<label for="bobIPv6" class="col-xs-12 col-md-4 col-lg-3">Tunneled IPv6 Address</label>
+	<input id="bobIPv6" type="text" class="form-control col-xs-12 col-md-8 col-lg-6" placeholder="fdxx:xxxx:xxxx::xxxx">
+</div>
+<div class="form-group row">
+	<label for="bobLink" class="col-xs-12 col-md-4 col-lg-3">Link Local IPv6 Address</label>
+	<input id="bobLink" type="text" class="form-control col-xs-12 col-md-8 col-lg-6" placeholder="fe80::xxxx" required>
+</div>
+<div class="form-group row">
+	<label for="bobPubl" class="col-xs-12 col-md-4 col-lg-3">WireGuard Public Key</label>
+	<input id="bobPubl" type="text" class="form-control col-xs-12 col-md-8 col-lg-6" placeholder="enTER+y0uR/256+B1TS/baSe+64/enCoded+key/HeRE=" required>
+</div>
+<div class="form-group row">
+	<label for="bobWG" class="col-xs-12 col-md-4 col-lg-3">WireGuard Endpoint</label>
+	<input id="bobWG" type="hidden">
+	<div class="input-group col-xs-12 col-md-8 col-lg-6 p-0">
+		<input id="bobWGAddr" type="text" class="form-control col-xs-10 col-sm-8 col-md-8 col-lg-8" placeholder="Clearnet IP or domain of your server" required>
+		<div class="input-group-prepend input-group-append">
+			<div class="input-group-text">:</div>
+		</div>
+		<input id="bobWGPort" type="text" class="form-control col-xs-1 col-sm-3 col-md-3 col-lg-3" placeholder="UDP Port" required>
+	</div>
+</div>
+
+<h2>bgp preferences</h2>
+<div class="form-group row">
+	<label for="multiProtocol" class="col-xs-12 col-md-4 col-lg-3">Multi-protocol Session</label>
+	<select id="multiProtocol" class="form-control col-xs-12 col-md-8 col-lg-6">
+		<option value="mp">Multi-protocol BGP over IPv6 transport (Preferred)</option>
+		<option value="dual">IPv4 routes over IPv4 transport, and IPv6 routes over IPv6</option>
+		<option value="v6">Route only IPv6 prefixes (over IPv6 transport)</option>
+		<option value="v4">Route only IPv4 prefixes (over IPv4 transport)</option>
+	</select>
+</div>
+<div class="form-group row">
+	<label for="latency" class="col-xs-12 col-md-4 col-lg-3">Link Latency</label>
+	<select id="latency" class="form-control col-xs-12 col-md-8 col-lg-6">
+		<option value="1">&le; 2.7ms (64511, 1)</option>
+		<option value="2">&le; 7.3ms (64511, 2)</option>
+		<option value="3" selected>&le; 20ms (64511, 3)</option>
+		<option value="4">&le; 55ms (64511, 4)</option>
+		<option value="5">&le; 148ms (64511, 5)</option>
+		<option value="6">&le; 403ms (64511, 6)</option>
+		<option value="7">&le; 1097ms (64511, 7)</option>
+		<option value="8">&le; 2981ms (64511, 8)</option>
+		<option value="9">&gt; 2981ms (64511, 9)</option>
+	</select>
+</div>
+<div class="form-group row">
+	<label for="bandwidth" class="col-xs-12 col-md-4 col-lg-3">Link Bandwidth</label>
+	<select id="bandwidth" class="form-control col-xs-12 col-md-8 col-lg-6">
+		<option value="20">&lt; 100kbps (64511, 20)</option>
+		<option value="21">&ge; 100kbps (64511, 21)</option>
+		<option value="22">&ge; 1Mbps (64511, 22)</option>
+		<option value="23">&ge; 10Mbps (64511, 23)</option>
+		<option value="24" selected>&ge; 100Mbps (64511, 24)</option>
+		<option value="25">&ge; 1Gbps (64511, 25)</option>
+		<option value="26">&ge; 10Gbps (64511, 26)</option>
+	</select>
+</div>
+<button type="submit" class="btn btn-primary">Submit</button>
+</form>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+	document.querySelector('#bobAS').addEventListener('change', function(event) {
+		var peerAS = event.target.value;
+		document.querySelector('#aliceWG').value = peerAS.slice(peerAS.length > 5? peerAS.length - 5: 0);
+		document.querySelector('#bobLink').value = 'fe80::' + peerAS.slice(peerAS.length > 4? peerAS.length - 4: 0);
+	});
+
+	var roles = ['Alice', 'Bob'];
+	var fields = ['ASN', 'Loc', 'IPv4', 'IPv6', 'Link', 'Publ', 'WG'];
+	for (var i = 0; i < roles.length; i++) {
+		for (var j = 0; j < fields.length; j++) {
+			var src = info[roles[i]][fields[j].toLowerCase()],
+				dest = document.querySelector('#' + roles[i].toLowerCase() + fields[j]);
+			if (src && dest) {
+				dest.value = src;
+			}
+		}
+	}
+});
+</script>
+`

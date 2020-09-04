@@ -152,7 +152,11 @@ func summaryTable(data string, serverName string) string {
 			}[row[3]])
 
 			// Add link to detail for first column
-			result += fmt.Sprintf(`<td><a href="/detail/%s/%[2]s">%[2]s</a></td>`, serverName, row[0])
+			if row[0] == "new_peer" {
+				result += fmt.Sprintf(`<td><a href="/new_peer/%s">+ add new peer</a></td>`, serverName)
+			} else {
+				result += fmt.Sprintf(`<td><a href="/detail/%s/%[2]s">%[2]s</a></td>`, serverName, row[0])
+			}
 
 			// Draw the other cells
 			for i := 1; i < 6; i++ {
