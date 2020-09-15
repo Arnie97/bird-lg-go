@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -19,12 +20,26 @@ type PointOfPresence struct {
 	Name                string `json:"name"`
 	AutonomousSystem    uint32 `json:"asn"`
 	WireGuardEndpoint   string `json:"wg"`
-	WireGuardPrivateKey string `json:"priv,omitempty"`
-	WireGuardPublicKey  string `json:"publ,omitempty"`
+	WireGuardPrivateKey Base64 `json:"priv,omitempty"`
+	WireGuardPublicKey  Base64 `json:"publ,omitempty"`
 	TunneledIPv4        net.IP `json:"ipv4,omitempty"`
 	TunneledIPv6        net.IP `json:"ipv6,omitempty"`
 	LinkLocalIPv6       net.IP `json:"link,omitempty"`
+	AdditionalNotes     string `json:"note,omitempty"`
 	Geolocation         string `json:"loc,omitempty"`
+}
+
+type Base64 string
+
+func (b *Base64) UnmarshalJSON(src []byte) error {
+	raw, err := base64.StdEncoding.DecodeString(string(src))
+	if err != nil {
+		return err
+	} else if len(raw) != 256 {
+		return fmt.Errorf("invalid wireguard key size: %d != 256", len(raw))
+	}
+	*b = Base64(src)
+	return nil
 }
 
 type Communities struct {
