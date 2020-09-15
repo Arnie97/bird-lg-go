@@ -25,6 +25,7 @@ type PointOfPresence struct {
 	TunneledIPv6        net.IP `json:"ipv6,omitempty"`
 	LinkLocalIPv6       net.IP `json:"link,omitempty"`
 	Geolocation         string `json:"loc,omitempty"`
+	AdditionalNotes     string `json:"note,omitempty"`
 }
 
 type Communities struct {
