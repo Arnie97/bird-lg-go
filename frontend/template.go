@@ -96,6 +96,7 @@ var tmpl = template.Must(template.New("tmpl").Parse(`
 
 <script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.min.js" integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0=" crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.1/dist/js/bootstrap.min.js" integrity="sha256-0IiaoZCI++9oAAvmCb5Y0r93XkuhvJpRalZLffQXLok=" crossorigin="anonymous"></script>
+<script>jQuery.noConflict();</script>
 </body>
 </html>
 `))
@@ -120,7 +121,7 @@ const peeringForm = `
 </div>
 <div class="form-group row">
 	<label for="aliceLink" class="col-xs-12 col-md-4 col-lg-3">Link Local IPv6 Address</label>
-	<input id="aliceLink" type="text" class="form-control col-xs-12 col-md-8 col-lg-6" readonly>
+	<input id="aliceLink" type="text" class="form-control col-xs-12 col-md-8 col-lg-6">
 </div>
 <div class="form-group row">
 	<label for="alicePubl" class="col-xs-12 col-md-4 col-lg-3">WireGuard Public Key</label>
@@ -129,6 +130,10 @@ const peeringForm = `
 <div class="form-group row">
 	<label for="aliceWG" class="col-xs-12 col-md-4 col-lg-3">WireGuard Endpoint</label>
 	<input id="aliceWG" type="text" class="form-control col-xs-12 col-md-8 col-lg-6" readonly>
+</div>
+<div class="form-group row">
+	<label for="aliceNote" class="col-xs-12 col-md-4 col-lg-3">Additional Notes</label>
+	<textarea id="aliceNote" class="form-control col-xs-12 col-md-8 col-lg-6" rows="5" readonly></textarea>
 </div>
 </form>
 
@@ -169,6 +174,10 @@ const peeringForm = `
 		</div>
 		<input id="bobWGPort" type="text" class="form-control col-xs-1 col-sm-3 col-md-3 col-lg-3" placeholder="UDP Port" required>
 	</div>
+</div>
+<div class="form-group row">
+	<label for="bobNote" class="col-xs-12 col-md-4 col-lg-3">Additional Notes</label>
+	<textarea id="bobNote" class="form-control col-xs-12 col-md-8 col-lg-6" rows="5" placeholder="Please feel free to write anything here - probably about yourself, your network topology or your special peering needs.&#10;Will never be shown to anyone else."></textarea>
 </div>
 
 <h2>bgp preferences</h2>
