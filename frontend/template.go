@@ -115,7 +115,7 @@ const peeringForm = `
 	<input id="aliceASN" type="text" class="form-control col-xs-12 col-md-8 col-lg-6" placeholder="Loading..." readonly>
 </div>
 <div class="form-group row">
-	<label for="aliceLoc" class="col-xs-12 col-md-4 col-lg-3">Location (IATA Identifier)</label>
+	<label for="aliceLoc" class="col-xs-12 col-md-4 col-lg-3">PoP Location (<a href="https://openflights.org/html/apsearch">IATA</a> / <a href="https://dxcluster.ha8tks.hu/hamgeocoding">Grid</a>)</label>
 	<input id="aliceLoc" type="text" class="form-control col-xs-12 col-md-8 col-lg-6" readonly>
 </div>
 <div class="form-group row">
@@ -149,11 +149,11 @@ const peeringForm = `
 <form>
 <div class="form-group row">
 	<label for="bobAS" class="col-xs-12 col-md-4 col-lg-3">Your AS Number</label>
-	<input id="bobAS" type="text" class="form-control col-xs-12 col-md-8 col-lg-6" placeholder="424242xxxx" required>
+	<input id="bobAS" type="number" min="1" max="4294967295" class="form-control col-xs-12 col-md-8 col-lg-6" placeholder="424242xxxx" required>
 </div>
 <div class="form-group row">
-	<label for="bobLoc" class="col-xs-12 col-md-4 col-lg-3">Location (IATA Identifier)</label>
-	<input id="bobLoc" type="text" class="form-control col-xs-12 col-md-8 col-lg-6" placeholder="XXX">
+	<label for="bobLoc" class="col-xs-12 col-md-4 col-lg-3">PoP Location (<a href="https://openflights.org/html/apsearch">IATA</a> / <a href="https://dxcluster.ha8tks.hu/hamgeocoding">Grid</a>)</label>
+	<input id="bobLoc" type="text" pattern="\w+" class="form-control col-xs-12 col-md-8 col-lg-6" placeholder="alphanumeric only, IATA identifier or grid locator preferred" required>
 </div>
 <div class="form-group row">
 	<label for="bobIPv4" class="col-xs-12 col-md-4 col-lg-3">Tunneled IPv4 Address</label>
@@ -169,17 +169,17 @@ const peeringForm = `
 </div>
 <div class="form-group row">
 	<label for="bobPubl" class="col-xs-12 col-md-4 col-lg-3">WireGuard Public Key</label>
-	<input id="bobPubl" type="text" class="form-control col-xs-12 col-md-8 col-lg-6" placeholder="enTER+y0uR/256+B1TS/baSe+64/enCoded+key/HeRE=" required>
+	<input id="bobPubl" type="text" pattern="[A-Za-z0-9+/]{43}=?" class="form-control col-xs-12 col-md-8 col-lg-6" placeholder="enTER+y0uR/256+B1TS/baSe+64/enCoded+key/HeRE=" required>
 </div>
 <div class="form-group row">
 	<label for="bobWG" class="col-xs-12 col-md-4 col-lg-3">WireGuard Endpoint</label>
 	<input id="bobWG" type="hidden">
 	<div class="input-group col-xs-12 col-md-8 col-lg-6 p-0">
-		<input id="bobWGAddr" type="text" class="form-control col-xs-10 col-sm-8 col-md-8 col-lg-8" placeholder="Clearnet IP or domain of your server" required>
+		<input id="bobWGAddr" type="text" pattern="\w+[-\w\.]+\w+" class="form-control col-xs-10 col-sm-8 col-md-8 col-lg-8" placeholder="Clearnet IP or domain of your server" required>
 		<div class="input-group-prepend input-group-append">
 			<div class="input-group-text">:</div>
 		</div>
-		<input id="bobWGPort" type="text" class="form-control col-xs-1 col-sm-3 col-md-3 col-lg-3" placeholder="UDP Port" required>
+		<input id="bobWGPort" type="number" min="1" max="65535" class="form-control col-xs-1 col-sm-3 col-md-3 col-lg-3" placeholder="UDP Port" required>
 	</div>
 </div>
 <div class="form-group row">
@@ -189,12 +189,13 @@ const peeringForm = `
 
 <h2>bgp preferences</h2>
 <div class="form-group row">
-	<label for="multiProtocol" class="col-xs-12 col-md-4 col-lg-3">Multi-protocol Session</label>
-	<select id="multiProtocol" class="form-control col-xs-12 col-md-8 col-lg-6">
-		<option value="mp">Multi-protocol BGP over IPv6 transport (Preferred)</option>
-		<option value="dual">IPv4 routes over IPv4 transport, and IPv6 routes over IPv6</option>
-		<option value="v6">Route only IPv6 prefixes (over IPv6 transport)</option>
-		<option value="v4">Route only IPv4 prefixes (over IPv4 transport)</option>
+	<label for="protocol" class="col-xs-12 col-md-4 col-lg-3">Multi-protocol Session</label>
+	<select class="form-control col-xs-12 col-md-8 col-lg-6" id="protocol">
+		<option value="mpbg">Multi-protocol BGP over IPv6 link-local (Preferred)</option>
+		<option value="dual">Establish two BGP sessions: IPv6 link-local and IPv4</option>
+		<option value="link">Only route IPv6 prefixes (over IPv6 link-local)</option>
+		<option value="ipv6">Only route IPv6 prefixes (over IPv6 tunneled address)</option>
+		<option value="ipv4">Only route IPv4 prefixes (over IPv4 transport)</option>
 	</select>
 </div>
 <div class="form-group row">
@@ -223,28 +224,127 @@ const peeringForm = `
 		<option value="26">&ge; 10Gbps (64511, 26)</option>
 	</select>
 </div>
-<button type="submit" class="btn btn-primary">Submit</button>
+<div class="form-group row">
+	<label for="encryption" class="col-xs-12 col-md-4 col-lg-3">Encryption Level</label>
+	<select id="encryption" class="form-control col-xs-12 col-md-8 col-lg-6" disabled>
+		<option value="31">Not encrypted (64511, 31)</option>
+		<option value="32">Encrypted with unsafe VPN solution (64511, 32)</option>
+		<option value="33">Safe encryption, but no forward secrecy (64511, 33)</option>
+		<option value="34" selected>Safe encryption with perfect forward secrecy (64511, 34)</option>
+	</select>
+</div>
+
+<div class="form-check row py-3">
+	<input id="confirm" type="checkbox" class="form-check-input" required>
+	<label for="confirm" class="form-check-label">I have checked all the configurations above. Set up the new peering for me immediately.</label>
+</div>
+<div class="form-group row">
+	<button id="submit" type="button" class="btn btn-primary">Submit</button>
+</div>
 </form>
 
 <script>
+
+function $(selector) {
+	return document.querySelector(selector);
+}
+
+function asnSuffix(asn) {
+	return ('0000' + asn.toString()).slice(asn.toString().length);
+}
+
+function checkValidity() {
+	var inputs = document.querySelectorAll('input');
+	for (var i = 0; i < inputs.length; i++) {
+		if (!inputs[i].checkValidity()) {
+			inputs[i].reportValidity();
+			$('#confirm').checked = false;
+			return false;
+		}
+	}
+	return true;
+}
+
+var communities = ['Latency', 'Bandwidth'],
+	roles = ['Alice', 'Bob'],
+	fields = ['ASN', 'Loc', 'IPv4', 'IPv6', 'Link', 'Publ', 'Note', 'WG'];
+
 document.addEventListener('DOMContentLoaded', function() {
-	document.querySelector('#bobAS').addEventListener('change', function(event) {
+	$('#bobWGPort').value = '2' + asnSuffix(info.Alice.asn);
+	var wgParts = ['Addr', 'Port'];
+	for (var i = 0; i < wgParts.length; i++) {
+		$('#bobWG' + wgParts[i]).addEventListener('change', function(event) {
+			if (event.target.checkValidity())
+				$('#bobWG').value = $('#bobWGAddr').value + ':' + $('#bobWGPort').value;
+			else
+				event.target.reportValidity();
+		});
+	}
+
+	$('#bobAS').addEventListener('change', function(event) {
 		var peerAS = event.target.value;
-		document.querySelector('#aliceWG').value = peerAS.slice(peerAS.length > 5? peerAS.length - 5: 0);
-		document.querySelector('#bobLink').value = 'fe80::' + peerAS.slice(peerAS.length > 4? peerAS.length - 4: 0);
+
+		$('#bobLink').value =
+			peerAS? 'fe80::' + parseInt(asnSuffix(peerAS), 10).toString(): '';
+
+		if (info.Alice.wg.indexOf(':') === -1) {
+			peerAS = peerAS? '2' + asnSuffix(peerAS): '(20000 + Last 4 of peer ASN)';
+			$('#aliceWG').value = info.Alice.wg + ':' + peerAS;
+		}
 	});
 
-	var roles = ['Alice', 'Bob'];
-	var fields = ['ASN', 'Loc', 'IPv4', 'IPv6', 'Link', 'Publ', 'WG'];
 	for (var i = 0; i < roles.length; i++) {
 		for (var j = 0; j < fields.length; j++) {
-			var src = info[roles[i]][fields[j].toLowerCase()],
-				dest = document.querySelector('#' + roles[i].toLowerCase() + fields[j]);
+			var src = (info[roles[i]] || {})[fields[j].toLowerCase()],
+				dest = $('#' + roles[i].toLowerCase() + fields[j]);
+
 			if (src && dest) {
 				dest.value = src;
+			}
+			if (dest) {
+				dest.addEventListener('change', function(event) {
+					event.target.reportValidity();
+				});
 			}
 		}
 	}
 });
+
+$('#confirm').addEventListener('change', checkValidity);
+$('#submit').addEventListener('click', function(event) {
+	if (!checkValidity())
+		return;
+
+	var info = {};
+	for (var i = 0; i < roles.length; i++) {
+		for (var j = 0; j < fields.length; j++) {
+			var src = $('#' + roles[i].toLowerCase() + fields[j]);
+			if (!src) {
+				continue;
+			} else if (!info[roles[i]]) {
+				info[roles[i]] = {};
+			}
+			info[roles[i]][fields[j].toLowerCase()] = src.value;
+		}
+	}
+
+	for (var i = 0; i < communities.length; i++) {
+		var src = $('#' + communities[i].toLowerCase());
+		if (src) {
+			info[communities[i]] = src.value;
+		}
+	}
+
+	var xhr = new XMLHttpRequest();
+	xhr.open("POST", "", true);
+	xhr.setRequestHeader("Content-Type", "application/json");
+	xhr.onreadystatechange = function() {
+		if (xhr.readyState === 4 && xhr.status === 200) {
+			var json = JSON.parse(xhr.responseText);
+		}
+	};
+	xhr.send(JSON.stringify(info));
+});
+
 </script>
 `
