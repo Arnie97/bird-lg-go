@@ -59,16 +59,19 @@ Features implemented:
 
 - Sending queries to BIRD
 - Sending "restrict" command to BIRD to prevent unauthorized changes
+- Establish new peerings with configuration boilerplates (experimental, use at your own risk)
 - Executing traceroute command on Linux, FreeBSD and OpenBSD
 - Source IP restriction
 
-Usage: all configuration is done via commandline parameters or environment variables, no config file.
+Usage:
 
 | Parameter | Environment Variable | Description |
 | --------- | -------------------- | ----------- |
 | --allowed | ALLOWED_IPS | IPs allowed to access this proxy, separated by commas. Don't set to allow all IPs. (default "") |
 | --bird | BIRD_SOCKET | socket file for bird, set either in parameter or environment variable BIRD_SOCKET (default "/var/run/bird/bird.ctl") |
 | --listen | BIRDLG_LISTEN | listen address, set either in parameter or environment variable BIRDLG_LISTEN (default ":8000") |
+| --peering | BIRDLG_PEERING | file for peering form parameters (disabled by default)
+| --templates | BIRDLG_TEMPLATES | directory for peering config boilerplates (default "./templates")
 
 Example: start proxy with default configuration, should work "out of the box" on Debian 9 with BIRDv1:
 
