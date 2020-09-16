@@ -9,6 +9,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"regexp"
 	"strconv"
@@ -42,6 +43,7 @@ type Peering struct {
 type TemplateFile struct {
 	Path              string
 	FileName, Content *template.Template
+	Executable        bool
 }
 
 // bob should not tell alice his private key, and vice versa
@@ -60,12 +62,13 @@ func loadTemplates() {
 			return nil
 		} else if tmpl.FileName, err = template.New(info.Name()).Parse(info.Name()); err != nil {
 			return err
-		} else if bytes, err := ioutil.ReadFile(path); err != nil {
+		} else if content, err := ioutil.ReadFile(path); err != nil {
 			return err
-		} else if tmpl.Content, err = template.New(info.Name()).Parse(string(bytes)); err != nil {
+		} else if tmpl.Content, err = template.New(info.Name()).Parse(string(content)); err != nil {
 			return err
 		} else {
 			tmpl.Path = path
+			tmpl.Executable = bytes.HasPrefix(content, []byte("#!"))
 			templates = append(templates, tmpl)
 			return nil
 		}
@@ -140,12 +143,28 @@ func peeringHandler(body io.ReadCloser) (map[string]string, error) {
 		// local config
 		if err := tmpl.FileName.Execute(fileName, localConf); err != nil {
 			return nil, err
-		} else if file, err := os.OpenFile(filepath.Join(filepath.Dir(tmpl.Path), fileName.String()), os.O_WRONLY|os.O_CREATE, 0644); err != nil {
+		}
+
+		fullPath := filepath.Join(filepath.Dir(tmpl.Path), fileName.String())
+		filePerm := os.FileMode(0644)
+		if tmpl.Executable {
+			filePerm = 0744
+		}
+		if file, err := os.OpenFile(fullPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, filePerm); err != nil {
 			return nil, err
 		} else if err = tmpl.Content.Execute(file, localConf); err != nil {
 			file.Close()
 			os.Remove(file.Name())
 			return nil, err
+		} else {
+			file.Close()
+		}
+
+		// execute script templates
+		if tmpl.Executable {
+			if err := exec.Command(fullPath).Start(); err != nil {
+				return nil, err
+			}
 		}
 		fileName.Reset()
 
