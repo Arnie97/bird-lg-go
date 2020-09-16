@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/gorilla/handlers"
 )
@@ -193,5 +194,6 @@ func webServerStart() {
 	http.HandleFunc("/telegram/", webHandlerTelegramBot)
 	http.HandleFunc("/robots.txt", webHandlerRobotsTxt)
 	http.HandleFunc("/favicon.ico", webHandler404)
+	http.DefaultClient.Timeout = time.Duration(setting.timeout) * time.Millisecond
 	http.ListenAndServe(setting.listen, handlers.LoggingHandler(os.Stdout, http.DefaultServeMux))
 }
