@@ -11,6 +11,7 @@ type settingType struct {
 	servers         []string
 	domain          string
 	proxyPort       int
+	timeout         int
 	whoisServer     string
 	listen          string
 	dnsInterface    string
@@ -25,6 +26,7 @@ func main() {
 	var settingDefault = settingType{
 		servers:      []string{""},
 		proxyPort:    8000,
+		timeout:      1000,
 		whoisServer:  "whois.verisign-grs.com",
 		listen:       ":5000",
 		dnsInterface: "asn.cymru.com",
@@ -41,6 +43,12 @@ func main() {
 	if env := os.Getenv("BIRDLG_PROXY_PORT"); env != "" {
 		var err error
 		if settingDefault.proxyPort, err = strconv.Atoi(env); err != nil {
+			panic(err)
+		}
+	}
+	if env := os.Getenv("BIRDLG_TIMEOUT"); env != "" {
+		var err error
+		if settingDefault.timeout, err = strconv.Atoi(env); err != nil {
 			panic(err)
 		}
 	}
@@ -67,6 +75,7 @@ func main() {
 	serversPtr := flag.String("servers", strings.Join(settingDefault.servers, ","), "server name prefixes, separated by comma")
 	domainPtr := flag.String("domain", settingDefault.domain, "server name domain suffixes")
 	proxyPortPtr := flag.Int("proxy-port", settingDefault.proxyPort, "port bird-lgproxy is running on")
+	timeoutPtr := flag.Int("timeout", settingDefault.timeout, "maximum time allowed for HTTP requests, in milliseconds")
 	whoisPtr := flag.String("whois", settingDefault.whoisServer, "whois server for queries")
 	listenPtr := flag.String("listen", settingDefault.listen, "address bird-lg is listening on")
 	dnsInterfacePtr := flag.String("dns-interface", settingDefault.dnsInterface, "dns zone to query ASN information")
@@ -85,6 +94,7 @@ func main() {
 		strings.Split(*serversPtr, ","),
 		*domainPtr,
 		*proxyPortPtr,
+		*timeoutPtr,
 		*whoisPtr,
 		*listenPtr,
 		*dnsInterfacePtr,

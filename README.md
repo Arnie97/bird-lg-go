@@ -22,6 +22,7 @@ Usage: all configuration is done via commandline parameters or environment varia
 - --domain / BIRDLG_DOMAIN: server name domain suffixes
 - --listen / BIRDLG_LISTEN: address bird-lg is listening on (default ":5000")
 - --proxy-port / BIRDLG_PROXY_PORT: port bird-lgproxy is running on (default 8000)
+- --timeout / BIRDLG_TIMEOUT: maximum time allowed for HTTP requests, in milliseconds (default 1000)
 - --whois / BIRDLG_WHOIS: whois server for queries (default "whois.verisign-grs.com")
 
 Example: the following command starts the frontend with 2 BIRD nodes, with domain name "gigsgigscloud.dn42.lantian.pub" and "hostdare.dn42.lantian.pub", and proxies are running on port 8000 on both nodes.
