@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/gorilla/handlers"
 )
@@ -182,5 +183,6 @@ func webServerStart() {
 	http.HandleFunc("/new_peer/", webHandlerPeering)
 	http.HandleFunc("/redir", webHandlerNavbarFormRedirect)
 	http.HandleFunc("/telegram/", webHandlerTelegramBot)
+	http.DefaultClient.Timeout = time.Duration(setting.timeout) * time.Millisecond
 	http.ListenAndServe(setting.listen, handlers.LoggingHandler(os.Stdout, http.DefaultServeMux))
 }
