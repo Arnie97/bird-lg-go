@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
 	"text/template"
@@ -17,15 +18,15 @@ import (
 )
 
 type PointOfPresence struct {
-	Name                string `json:"name"`
-	AutonomousSystem    uint32 `json:"asn"`
+	ASNumberFull        uint32 `json:"asn"`
+	ASNumberSuffix      string `json:"-"`
 	WireGuardEndpoint   string `json:"wg"`
 	WireGuardPrivateKey string `json:"priv,omitempty"`
 	WireGuardPublicKey  string `json:"publ,omitempty"`
 	TunneledIPv4        net.IP `json:"ipv4,omitempty"`
 	TunneledIPv6        net.IP `json:"ipv6,omitempty"`
 	LinkLocalIPv6       net.IP `json:"link,omitempty"`
-	Geolocation         string `json:"loc,omitempty"`
+	Name                string `json:"name,omitempty"`
 	AdditionalNotes     string `json:"note,omitempty"`
 }
 
@@ -130,7 +131,7 @@ func peeringHandler(body io.ReadCloser) (map[string]string, error) {
 		Communities: localConf.Communities,
 	}).MaskPrivateKeys()
 
-	if err := setWireGuardPortByPeerASN(localConf); err != nil {
+	if err := getASNumberSuffix(localConf); err != nil {
 		return nil, err
 	}
 
@@ -173,7 +174,14 @@ func peeringForm(query string, httpW http.ResponseWriter) {
 	)))
 }
 
-func setWireGuardPortByPeerASN(conf *Peering) error {
+var isAlphaNumeric = regexp.MustCompile(`^\w+$`).MatchString
+
+func getASNumberSuffix(conf *Peering) error {
+	for _, role := range []*PointOfPresence{&conf.Alice, &conf.Bob} {
+		fullASN := strconv.FormatInt(int64(role.ASNumberFull), 10)
+		role.ASNumberSuffix = ("0000" + fullASN)[len(fullASN):]
+	}
+
 	var (
 		index = strings.IndexRune(conf.Alice.WireGuardEndpoint, ':')
 		port  string
@@ -181,7 +189,7 @@ func setWireGuardPortByPeerASN(conf *Peering) error {
 	if index >= 0 {
 		port = conf.Alice.WireGuardEndpoint[index+1:]
 	} else {
-		port = strconv.Itoa(int(conf.Bob.AutonomousSystem%10000) + 20000)
+		port = "2" + conf.Bob.ASNumberSuffix
 	}
 
 	if listener, err := net.ListenPacket("udp", ":"+port); err != nil {
@@ -190,5 +198,9 @@ func setWireGuardPortByPeerASN(conf *Peering) error {
 		return err
 	}
 	conf.Alice.WireGuardEndpoint = port
+
+	if !isAlphaNumeric(conf.Bob.Name) {
+		return fmt.Errorf("identifier '%s' should be modified to be alphanumeric", conf.Bob.Name)
+	}
 	return nil
 }

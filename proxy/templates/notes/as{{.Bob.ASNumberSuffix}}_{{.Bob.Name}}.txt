@@ -1,0 +1,10 @@
+Peering with:  {{.Alice.Name}}
+AS Number:     {{.Bob.ASNumberFull}}
+Location Name: {{.Bob.Name}}
+Endpoint:      {{.Bob.WireGuardEndpoint}}
+Public Key:    {{.Bob.WireGuardPublicKey}}
+Tunneled IPv4: {{.Bob.TunneledIPv4}}
+Tunneled IPv6: {{.Bob.TunneledIPv6}}
+Link Local:    {{.Bob.LinkLocalIPv6}}
+
+{{.Bob.AdditionalNotes}}

@@ -1,5 +1,5 @@
 [NetDev]
-Name = {{.Bob.Name}}
+Name = as{{.Bob.ASNumberSuffix}}_{{.Bob.Name}}
 Kind = wireguard
 
 [WireGuard]
@@ -8,7 +8,7 @@ PrivateKey = {{.Alice.WireGuardPrivateKey}}
 
 [WireGuardPeer]
 Endpoint   = {{.Bob.WireGuardEndpoint}}
-PublicKey  = {{.Alice.WireGuardPublicKey}}
+PublicKey  = {{.Bob.WireGuardPublicKey}}
 AllowedIPs = 172.20.0.0/14
 AllowedIPs = 172.31.0.0/16
 AllowedIPs = 10.100.0.0/14

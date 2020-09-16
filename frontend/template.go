@@ -107,8 +107,8 @@ const peeringForm = `
 	<input id="aliceASN" type="number" class="form-control col-xs-12 col-md-8 col-lg-6" placeholder="Loading..." readonly>
 </div>
 <div class="form-group row">
-	<label for="aliceLoc" class="col-xs-12 col-md-4 col-lg-3">PoP Location (<a href="https://openflights.org/html/apsearch">IATA</a> / <a href="https://dxcluster.ha8tks.hu/hamgeocoding">Grid</a>)</label>
-	<input id="aliceLoc" type="text" class="form-control col-xs-12 col-md-8 col-lg-6" readonly>
+	<label for="aliceName" class="col-xs-12 col-md-4 col-lg-3">PoP Location (<a href="https://openflights.org/html/apsearch">IATA</a> / <a href="https://dxcluster.ha8tks.hu/hamgeocoding">Grid</a>)</label>
+	<input id="aliceName" type="text" class="form-control col-xs-12 col-md-8 col-lg-6" readonly>
 </div>
 <div class="form-group row">
 	<label for="aliceIPv4" class="col-xs-12 col-md-4 col-lg-3">Tunneled IPv4 Address</label>
@@ -142,8 +142,8 @@ const peeringForm = `
 	<input id="bobASN" type="number" min="1" max="4294967295" class="form-control col-xs-12 col-md-8 col-lg-6" placeholder="424242xxxx" required>
 </div>
 <div class="form-group row">
-	<label for="bobLoc" class="col-xs-12 col-md-4 col-lg-3">PoP Location (<a href="https://openflights.org/html/apsearch">IATA</a> / <a href="https://dxcluster.ha8tks.hu/hamgeocoding">Grid</a>)</label>
-	<input id="bobLoc" type="text" pattern="\w+" class="form-control col-xs-12 col-md-8 col-lg-6" placeholder="alphanumeric only, IATA identifier or grid locator preferred" required>
+	<label for="bobName" class="col-xs-12 col-md-4 col-lg-3">PoP Location (<a href="https://openflights.org/html/apsearch">IATA</a> / <a href="https://dxcluster.ha8tks.hu/hamgeocoding">Grid</a>)</label>
+	<input id="bobName" type="text" pattern="\w+" class="form-control col-xs-12 col-md-8 col-lg-6" placeholder="alphanumeric only, IATA identifier or grid locator preferred" required>
 </div>
 <div class="form-group row">
 	<label for="bobIPv4" class="col-xs-12 col-md-4 col-lg-3">Tunneled IPv4 Address</label>
@@ -257,20 +257,10 @@ function checkValidity() {
 
 var communities = ['Latency', 'Bandwidth'],
 	roles = ['Alice', 'Bob'],
-	fields = ['ASN', 'Loc', 'IPv4', 'IPv6', 'Link', 'Publ', 'Note', 'WG'];
+	fields = ['ASN', 'Name', 'IPv4', 'IPv6', 'Link', 'Publ', 'Note', 'WG'];
 
 document.addEventListener('DOMContentLoaded', function() {
 	$('#bobWGPort').value = '2' + asnSuffix(info.Alice.asn);
-	var wgParts = ['Addr', 'Port'];
-	for (var i = 0; i < wgParts.length; i++) {
-		$('#bobWG' + wgParts[i]).addEventListener('change', function(event) {
-			if (event.target.checkValidity())
-				$('#bobWG').value = $('#bobWGAddr').value + ':' + $('#bobWGPort').value;
-			else
-				event.target.reportValidity();
-		});
-	}
-
 	$('#bobASN').addEventListener('change', function(event) {
 		var peerAS = event.target.value;
 
@@ -301,6 +291,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 $('#confirm').addEventListener('change', checkValidity);
 $('#submit').addEventListener('click', function(event) {
+	$('#bobWG').value = $('#bobWGAddr').value + ':' + $('#bobWGPort').value;
 	if (!checkValidity())
 		return;
 
