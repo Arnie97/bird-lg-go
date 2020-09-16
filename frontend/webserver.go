@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"html"
 	"net/http"
@@ -17,6 +18,41 @@ func webHandlerWhois(w http.ResponseWriter, r *http.Request) {
 		w, r,
 		" - whois "+html.EscapeString(target),
 		"<h2>whois "+html.EscapeString(target)+"</h2>"+smartFormatter(whois(target)),
+	)
+}
+
+func webHandlerPeering(w http.ResponseWriter, r *http.Request) {
+	var (
+		server string = r.URL.Path[len("/new_peer/"):]
+		body   string
+		msg    struct {
+			Error string
+			Files map[string]string
+		}
+	)
+	ret, err := peeringRequest(server, r)
+	if err == nil {
+		if err = json.Unmarshal(ret, &msg); err != nil {
+			err = fmt.Errorf("%s", string(ret))
+		} else if msg.Error != "" {
+			err = fmt.Errorf("server error: %v", msg.Error)
+		}
+	}
+	if err != nil {
+		body = `<pre>` + html.EscapeString(err.Error()) + `</pre>`
+	} else if msg.Files != nil {
+		for path, content := range msg.Files {
+			body = "<p>Congratulations, WireGuard tunnel and BGP sessions have been setup on my server instantly. Just in case you're new to DN42, below are some example configuration files that you could use to setup your own node. Happy hacking!</p>"
+			body += `<h5>` + html.EscapeString(path) + `</h5>`
+			body += `<pre>` + html.EscapeString(content) + `</pre>`
+		}
+	} else {
+		body = `<script> var info = ` + string(ret) + `; </script>` + peeringForm
+	}
+	renderTemplate(
+		w, r,
+		" - peering with "+html.EscapeString(server),
+		`<h2>`+html.EscapeString(server)+`: peering request</h2>`+body,
 	)
 }
 
@@ -56,12 +92,6 @@ func webBackendCommunicator(endpoint string, command string) func(w http.Respons
 		var responses []string = batchRequest(servers, endpoint, backendCommand)
 		var result string
 		for i, response := range responses {
-			if endpoint == "peering" {
-				result += "<h2>" + html.EscapeString(servers[i]) + ": peering request</h2>"
-				result += "<script> var info = " + response + "; </script>" + peeringForm
-				continue
-			}
-
 			result += "<h2>" + html.EscapeString(servers[i]) + ": " + html.EscapeString(backendCommand) + "</h2>"
 			if (endpoint == "bird") && backendCommand == "show protocols" && len(response) > 4 && strings.ToLower(response[0:4]) == "name" {
 				result += summaryTable(response, servers[i])
@@ -158,7 +188,7 @@ func webServerStart() {
 	http.HandleFunc("/generic/", webBackendCommunicator("bird", "generic"))
 	http.HandleFunc("/traceroute/", webBackendCommunicator("traceroute", "traceroute"))
 	http.HandleFunc("/whois/", webHandlerWhois)
-	http.HandleFunc("/new_peer/", webBackendCommunicator("peering", "generic"))
+	http.HandleFunc("/new_peer/", webHandlerPeering)
 	http.HandleFunc("/redir", webHandlerNavbarFormRedirect)
 	http.HandleFunc("/telegram/", webHandlerTelegramBot)
 	http.HandleFunc("/robots.txt", webHandlerRobotsTxt)
