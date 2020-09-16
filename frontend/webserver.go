@@ -41,8 +41,8 @@ func webHandlerPeering(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		body = `<pre>` + html.EscapeString(err.Error()) + `</pre>`
 	} else if msg.Files != nil {
+		body = "<p>Congratulations, WireGuard tunnel and BGP sessions have been setup on my server instantly. Just in case you're new to DN42, below are some example configuration files that you could use to setup your own node. Happy hacking!</p>"
 		for path, content := range msg.Files {
-			body = "<p>Congratulations, WireGuard tunnel and BGP sessions have been setup on my server instantly. Just in case you're new to DN42, below are some example configuration files that you could use to setup your own node. Happy hacking!</p>"
 			body += `<h5>` + html.EscapeString(path) + `</h5>`
 			body += `<pre>` + html.EscapeString(content) + `</pre>`
 		}

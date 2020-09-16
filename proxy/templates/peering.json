@@ -1,0 +1,13 @@
+{
+	"alice": {
+		"asn":  4242420977,
+		"name": "SHA",
+		"wg":   "sha.moerail.ml",
+		"ipv4": "172.20.128.193",
+		"ipv6": "fdec:c6a:4002::3",
+		"link": "fe80::977",
+		"publ": "37h3E25yobnEFTy+E2OChgLRLacnd+pN6t7cA6JTllU=",
+		"priv": "(private key removed)",
+		"note": "Hello world!\nThis is an example peering config"
+	}
+}

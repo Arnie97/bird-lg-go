@@ -1,5 +1,5 @@
 [Match]
-Name = {{.Bob.Name}}
+Name = as{{.Bob.ASNumberSuffix}}_{{.Bob.Name}}
 
 [Network]
 DHCP = false
