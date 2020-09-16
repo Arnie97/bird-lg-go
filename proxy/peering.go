@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"text/template"
 	"time"
@@ -81,17 +82,24 @@ func peeringWrapper(httpW http.ResponseWriter, httpR *http.Request) {
 		resp := *peeringConf
 		json.NewEncoder(httpW).Encode(resp.MaskPrivateKeys())
 	case "POST":
-		resp, err := peeringHandler(httpR.Body)
+		var (
+			err  error
+			resp struct {
+				Error string
+				Files map[string]string
+			}
+		)
+		resp.Files, err = peeringHandler(httpR.Body)
 		if err != nil {
-			resp = map[string]string{"error": err.Error()}
+			resp.Error = err.Error()
 		} else {
 			birdReconfigure(setting.birdSocket)
 		}
-		json.NewEncoder(httpW).Encode(resp)
+		json.NewEncoder(httpW).Encode(&resp)
 	}
 }
 
-func peeringHandler(body io.ReadCloser) (interface{}, error) {
+func peeringHandler(body io.ReadCloser) (map[string]string, error) {
 	var (
 		req      *Peering
 		resp     = make(map[string]string)
@@ -121,6 +129,10 @@ func peeringHandler(body io.ReadCloser) (interface{}, error) {
 		Bob:         localConf.Alice,
 		Communities: localConf.Communities,
 	}).MaskPrivateKeys()
+
+	if err := setWireGuardPortByPeerASN(localConf); err != nil {
+		return nil, err
+	}
 
 	for _, tmpl := range templates {
 
@@ -159,4 +171,24 @@ func peeringForm(query string, httpW http.ResponseWriter) {
 		"new_peer BGP automated open %s Peer with me in a minute!\n",
 		time.Now().Format("2006-01-02"),
 	)))
+}
+
+func setWireGuardPortByPeerASN(conf *Peering) error {
+	var (
+		index = strings.IndexRune(conf.Alice.WireGuardEndpoint, ':')
+		port  string
+	)
+	if index >= 0 {
+		port = conf.Alice.WireGuardEndpoint[index+1:]
+	} else {
+		port = strconv.Itoa(int(conf.Bob.AutonomousSystem%10000) + 20000)
+	}
+
+	if listener, err := net.ListenPacket("udp", ":"+port); err != nil {
+		return err
+	} else if err = listener.Close(); err != nil {
+		return err
+	}
+	conf.Alice.WireGuardEndpoint = port
+	return nil
 }

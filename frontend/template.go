@@ -102,10 +102,9 @@ var tmpl = template.Must(template.New("tmpl").Parse(`
 `))
 
 const peeringForm = `
-<form>
 <div class="form-group row">
 	<label for="aliceASN" class="col-xs-12 col-md-4 col-lg-3">My AS Number</label>
-	<input id="aliceASN" type="text" class="form-control col-xs-12 col-md-8 col-lg-6" placeholder="Loading..." readonly>
+	<input id="aliceASN" type="number" class="form-control col-xs-12 col-md-8 col-lg-6" placeholder="Loading..." readonly>
 </div>
 <div class="form-group row">
 	<label for="aliceLoc" class="col-xs-12 col-md-4 col-lg-3">PoP Location (<a href="https://openflights.org/html/apsearch">IATA</a> / <a href="https://dxcluster.ha8tks.hu/hamgeocoding">Grid</a>)</label>
@@ -135,14 +134,12 @@ const peeringForm = `
 	<label for="aliceNote" class="col-xs-12 col-md-4 col-lg-3">Additional Notes</label>
 	<textarea id="aliceNote" class="form-control col-xs-12 col-md-8 col-lg-6" rows="5" readonly></textarea>
 </div>
-</form>
 
 <h2>your point of presence</h2>
 
-<form>
 <div class="form-group row">
-	<label for="bobAS" class="col-xs-12 col-md-4 col-lg-3">Your AS Number</label>
-	<input id="bobAS" type="number" min="1" max="4294967295" class="form-control col-xs-12 col-md-8 col-lg-6" placeholder="424242xxxx" required>
+	<label for="bobASN" class="col-xs-12 col-md-4 col-lg-3">Your AS Number</label>
+	<input id="bobASN" type="number" min="1" max="4294967295" class="form-control col-xs-12 col-md-8 col-lg-6" placeholder="424242xxxx" required>
 </div>
 <div class="form-group row">
 	<label for="bobLoc" class="col-xs-12 col-md-4 col-lg-3">PoP Location (<a href="https://openflights.org/html/apsearch">IATA</a> / <a href="https://dxcluster.ha8tks.hu/hamgeocoding">Grid</a>)</label>
@@ -154,7 +151,7 @@ const peeringForm = `
 </div>
 <div class="form-group row">
 	<label for="bobIPv6" class="col-xs-12 col-md-4 col-lg-3">Tunneled IPv6 Address</label>
-	<input id="bobIPv6" type="text" class="form-control col-xs-12 col-md-8 col-lg-6" placeholder="fdxx:xxxx:xxxx::xxxx">
+	<input id="bobIPv6" type="text" class="form-control col-xs-12 col-md-8 col-lg-6" placeholder="fdxx:xxxx:xxxx::xxxx" required>
 </div>
 <div class="form-group row">
 	<label for="bobLink" class="col-xs-12 col-md-4 col-lg-3">Link Local IPv6 Address</label>
@@ -183,7 +180,7 @@ const peeringForm = `
 <h2>bgp preferences</h2>
 <div class="form-group row">
 	<label for="protocol" class="col-xs-12 col-md-4 col-lg-3">Multi-protocol Session</label>
-	<select class="form-control col-xs-12 col-md-8 col-lg-6" id="protocol">
+	<select class="form-control col-xs-12 col-md-8 col-lg-6" id="protocol" disabled>
 		<option value="mpbg">Multi-protocol BGP over IPv6 link-local (Preferred)</option>
 		<option value="dual">Establish two BGP sessions: IPv6 link-local and IPv4</option>
 		<option value="link">Only route IPv6 prefixes (over IPv6 link-local)</option>
@@ -234,7 +231,7 @@ const peeringForm = `
 <div class="form-group row">
 	<button id="submit" type="button" class="btn btn-primary">Submit</button>
 </div>
-</form>
+<form id="jsonForm" method="post"><input type="hidden" id="json" name="json"></form>
 
 <script>
 
@@ -274,7 +271,7 @@ document.addEventListener('DOMContentLoaded', function() {
 		});
 	}
 
-	$('#bobAS').addEventListener('change', function(event) {
+	$('#bobASN').addEventListener('change', function(event) {
 		var peerAS = event.target.value;
 
 		$('#bobLink').value =
@@ -291,14 +288,13 @@ document.addEventListener('DOMContentLoaded', function() {
 			var src = (info[roles[i]] || {})[fields[j].toLowerCase()],
 				dest = $('#' + roles[i].toLowerCase() + fields[j]);
 
-			if (src && dest) {
+			if (src && dest)
 				dest.value = src;
-			}
-			if (dest) {
+
+			if (dest)
 				dest.addEventListener('change', function(event) {
 					event.target.reportValidity();
 				});
-			}
 		}
 	}
 });
@@ -312,31 +308,25 @@ $('#submit').addEventListener('click', function(event) {
 	for (var i = 0; i < roles.length; i++) {
 		for (var j = 0; j < fields.length; j++) {
 			var src = $('#' + roles[i].toLowerCase() + fields[j]);
-			if (!src) {
+			if (!src)
 				continue;
-			} else if (!info[roles[i]]) {
+			else if (!info[roles[i]])
 				info[roles[i]] = {};
-			}
-			info[roles[i]][fields[j].toLowerCase()] = src.value;
+
+			info[roles[i]][fields[j].toLowerCase()] =
+				src.type === 'number'?
+				parseInt(src.value, 10): src.value;
 		}
 	}
 
 	for (var i = 0; i < communities.length; i++) {
 		var src = $('#' + communities[i].toLowerCase());
-		if (src) {
-			info[communities[i]] = src.value;
-		}
+		if (src)
+			info[communities[i]] = parseInt(src.value, 10);
 	}
 
-	var xhr = new XMLHttpRequest();
-	xhr.open("POST", "", true);
-	xhr.setRequestHeader("Content-Type", "application/json");
-	xhr.onreadystatechange = function() {
-		if (xhr.readyState === 4 && xhr.status === 200) {
-			var json = JSON.parse(xhr.responseText);
-		}
-	};
-	xhr.send(JSON.stringify(info));
+	$('#json').value = JSON.stringify(info);
+	$('#jsonForm').submit();
 });
 
 </script>
