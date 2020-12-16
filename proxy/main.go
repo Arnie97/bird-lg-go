@@ -122,7 +122,6 @@ func main() {
 		}
 		loadTemplates()
 	}
->>>>>>> ae36c0f... proxy: automated peering support
 
 	// Start HTTP server
 	http.HandleFunc("/", invalidHandler)

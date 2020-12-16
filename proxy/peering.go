@@ -32,6 +32,7 @@ type PointOfPresence struct {
 }
 
 type Communities struct {
+	MultiProtocol      string
 	Latency, Bandwidth uint32
 }
 

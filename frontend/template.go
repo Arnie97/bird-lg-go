@@ -185,7 +185,7 @@ const peeringForm = `
 		<option value="dual">Establish two BGP sessions: IPv6 link-local and IPv4</option>
 		<option value="link">Only route IPv6 prefixes (over IPv6 link-local)</option>
 		<option value="ipv6">Only route IPv6 prefixes (over IPv6 tunneled address)</option>
-		<option value="ipv4">Only route IPv4 prefixes (over IPv4 transport)</option>
+		<option value="ipv4">Only route IPv4 prefixes (over IPv4 tunneled address)</option>
 	</select>
 </div>
 <div class="form-group row">
@@ -315,6 +315,7 @@ $('#submit').addEventListener('click', function(event) {
 		if (src)
 			info[communities[i]] = parseInt(src.value, 10);
 	}
+	info['MultiProtocol'] = $('#protocol').value;
 
 	$('#json').value = JSON.stringify(info);
 	$('#jsonForm').submit();
