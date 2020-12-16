@@ -166,6 +166,9 @@ func peeringHandler(body io.ReadCloser) (map[string]string, error) {
 			if err := exec.Command(fullPath).Start(); err != nil {
 				return nil, err
 			}
+
+			fileName.Reset()
+			continue
 		}
 		fileName.Reset()
 
